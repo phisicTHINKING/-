@@ -1,0 +1,692 @@
+
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>빛의 간섭 실험실</title>
+
+<style>
+* {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    font-family: "Pretendard", "Noto Sans KR", sans-serif;
+    background: #0b1120;
+    color: #edf2ff;
+}
+
+header {
+    text-align: center;
+    padding: 35px 15px 25px;
+    background: linear-gradient(135deg,#14294a,#172044);
+}
+
+header h1 {
+    font-size: 30px;
+    margin: 0 0 12px;
+}
+
+header p {
+    color: #b7c5df;
+    line-height: 1.6;
+}
+
+.container {
+    max-width: 1050px;
+    margin: auto;
+    padding: 20px;
+}
+
+.panel {
+    background: #151f34;
+    border: 1px solid #293954;
+    border-radius: 15px;
+    padding: 20px;
+    margin-bottom: 20px;
+}
+
+h2 {
+    font-size: 19px;
+    margin-top: 0;
+}
+
+canvas {
+    width: 100%;
+    display: block;
+    border-radius: 10px;
+    background: #080f1e;
+}
+
+.control {
+    margin: 20px 0;
+}
+
+.control label {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 10px;
+    font-weight: bold;
+}
+
+input[type="range"] {
+    width: 100%;
+    accent-color: #60a5fa;
+    cursor: pointer;
+}
+
+button {
+    background: #263e67;
+    color: white;
+    border: 1px solid #49658e;
+    padding: 11px 16px;
+    border-radius: 8px;
+    cursor: pointer;
+    margin: 4px;
+    font-size: 14px;
+}
+
+button:hover {
+    background: #3864a0;
+}
+
+button.active {
+    background: #2563eb;
+    border-color: #60a5fa;
+}
+
+.buttons {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px;
+}
+
+.result-grid {
+    display: grid;
+    grid-template-columns: repeat(2,1fr);
+    gap: 12px;
+}
+
+.result {
+    background: #202e48;
+    border-radius: 10px;
+    padding: 16px;
+    text-align: center;
+}
+
+.result strong {
+    display: block;
+    font-size: 22px;
+    margin-top: 8px;
+    color: #60a5fa;
+}
+
+.description {
+    line-height: 1.8;
+    color: #cbd5e1;
+    font-size: 14px;
+}
+
+.formula {
+    background: #0b172b;
+    border-radius: 10px;
+    padding: 16px;
+    text-align: center;
+    font-size: 19px;
+    margin: 12px 0;
+    color: #93c5fd;
+}
+
+footer {
+    text-align: center;
+    padding: 25px;
+    color: #8293ad;
+    font-size: 12px;
+}
+
+@media(max-width:600px) {
+    header h1 {font-size:23px;}
+    .container {padding:12px;}
+    .panel {padding:14px;}
+}
+</style>
+</head>
+
+<body>
+
+<header>
+    <h1>빛의 간섭 실험실</h1>
+    <p>
+        Double Slit Experiment & Wave Interference<br>
+        직접 위상을 조절하며 빛의 이중성을 탐구해 보세요.
+    </p>
+</header>
+
+<div class="container">
+
+    <!-- 실험 장치 -->
+    <section class="panel">
+        <h2>01. 이중 슬릿 실험 장치</h2>
+        <p class="description">
+            광원에서 나온 빛이 두 개의 좁은 슬릿을 통과한 후
+            스크린에 도달하는 과정을 관찰할 수 있습니다.
+        </p>
+        <canvas id="experiment" width="900" height="330"></canvas>
+        <p class="description">
+            노란색: 빛의 진행 방향 및 파동 / 파란색: 첫 번째 슬릿 /
+            주황색: 두 번째 슬릿
+        </p>
+    </section>
+
+    <!-- 위상 조절 -->
+    <section class="panel">
+        <h2>02. 위상 차이 직접 조절하기</h2>
+
+        <div class="control">
+            <label>
+                <span>위상 차이</span>
+                <span id="phaseValue">0°</span>
+            </label>
+            <input type="range" id="phase"
+                   min="0" max="360" step="5" value="0">
+        </div>
+
+        <div class="buttons">
+            <button data-phase="0" class="active">0° 보강간섭</button>
+            <button data-phase="90">90°</button>
+            <button data-phase="180">180° 상쇄간섭</button>
+            <button data-phase="270">270°</button>
+            <button data-phase="360">360° 보강간섭</button>
+        </div>
+
+        <div class="result-grid" style="margin-top:18px">
+            <div class="result">
+                현재 간섭 유형
+                <strong id="interferenceType">보강간섭</strong>
+            </div>
+            <div class="result">
+                상대적인 빛의 세기
+                <strong id="intensity">100%</strong>
+            </div>
+        </div>
+
+        <p id="phaseDescription" class="description">
+            두 파동이 같은 위상으로 만나 마루와 마루,
+            골과 골이 겹쳐집니다.
+        </p>
+    </section>
+
+    <!-- 간섭무늬 -->
+    <section class="panel">
+        <h2>03. 스크린에 나타나는 간섭무늬</h2>
+        <p class="description">
+            위상 차이에 따라 밝고 어두운 무늬가 어떻게
+            변화하는지 확인해 보세요.
+        </p>
+        <canvas id="screen" width="900" height="260"></canvas>
+        <p class="description" id="screenDescription">
+            보강간섭으로 빛의 세기가 강하게 나타납니다.
+        </p>
+    </section>
+
+    <!-- 그래프 -->
+    <section class="panel">
+        <h2>04. 빛의 세기 그래프</h2>
+        <canvas id="graph" width="900" height="260"></canvas>
+        <p class="description">
+            가로축: 스크린의 위치 / 세로축: 상대적인 빛의 세기
+        </p>
+    </section>
+
+    <!-- 파장 및 슬릿 간격 -->
+    <section class="panel">
+        <h2>05. 실험 조건 변경하기</h2>
+
+        <div class="control">
+            <label>
+                <span>빛의 파장</span>
+                <span id="wavelengthValue">550 nm</span>
+            </label>
+            <input type="range" id="wavelength"
+                   min="400" max="700" value="550" step="10">
+        </div>
+
+        <div class="control">
+            <label>
+                <span>슬릿 사이의 간격</span>
+                <span id="distanceValue">0.5 mm</span>
+            </label>
+            <input type="range" id="distance"
+                   min="0.2" max="1.0" value="0.5" step="0.1">
+        </div>
+
+        <button id="reset">실험 초기화</button>
+
+        <p class="description">
+            파장이 길어지면 간섭무늬 사이의 간격이 넓어집니다.
+            반대로 슬릿 사이의 간격이 넓어지면
+            간섭무늬 사이의 간격은 좁아집니다.
+        </p>
+    </section>
+
+    <!-- 결과 해석 -->
+    <section class="panel">
+        <h2>06. 실험 결과 분석</h2>
+
+        <div class="formula">
+            보강간섭: ΔL = mλ
+        </div>
+
+        <div class="formula">
+            상쇄간섭: ΔL = (m + 1/2)λ
+        </div>
+
+        <p id="analysis" class="description">
+            두 슬릿을 통과한 빛의 파동이 서로 겹치면서
+            보강간섭과 상쇄간섭이 반복적으로 발생합니다.
+        </p>
+    </section>
+
+</div>
+
+<footer>
+    LIGHT INTERFERENCE LAB · 물리학 학습 시뮬레이션
+</footer>
+
+<script>
+
+// ================================
+// 기본 설정
+// ================================
+
+const experiment = document.getElementById("experiment");
+const screen = document.getElementById("screen");
+const graph = document.getElementById("graph");
+
+const ectx = experiment.getContext("2d");
+const sctx = screen.getContext("2d");
+const gctx = graph.getContext("2d");
+
+const phaseInput = document.getElementById("phase");
+const wavelengthInput = document.getElementById("wavelength");
+const distanceInput = document.getElementById("distance");
+
+let phase = 0;
+let wavelength = 550;
+let slitDistance = 0.5;
+
+// ================================
+// 공통 배경
+// ================================
+
+function background(ctx, canvas) {
+    ctx.fillStyle = "#080f1e";
+    ctx.fillRect(0,0,canvas.width,canvas.height);
+}
+
+// ================================
+// 실험 장치 그리기
+// ================================
+
+function drawExperiment() {
+
+    background(ectx,experiment);
+
+    const sourceX = 70;
+    const slitX = 390;
+    const screenX = 790;
+
+    // 광원
+    ectx.fillStyle = "#fde68a";
+    ectx.beginPath();
+    ectx.arc(sourceX,165,12,0,Math.PI*2);
+    ectx.fill();
+
+    ectx.fillStyle = "white";
+    ectx.font = "17px sans-serif";
+    ectx.fillText("광원",45,205);
+
+    // 광원에서 슬릿으로 향하는 빛
+    ectx.strokeStyle = "#facc15";
+    ectx.lineWidth = 2;
+
+    ectx.beginPath();
+    ectx.moveTo(85,165);
+    ectx.lineTo(slitX,165);
+    ectx.stroke();
+
+    // 슬릿 장벽
+    ectx.fillStyle = "#64748b";
+    ectx.fillRect(slitX-5,35,10,90);
+    ectx.fillRect(slitX-5,205,10,90);
+
+    // 슬릿 위치
+    const slit1Y = 145;
+    const slit2Y = 185;
+
+    ectx.fillStyle = "#60a5fa";
+    ectx.fillRect(slitX-5,125,10,40);
+
+    ectx.fillStyle = "#fb923c";
+    ectx.fillRect(slitX-5,165,10,40);
+
+    // 파동 원호
+    for(let r=20;r<340;r+=35) {
+
+        ectx.beginPath();
+        ectx.arc(slitX,slit1Y,r,-0.9,0.9);
+        ectx.strokeStyle = "rgba(96,165,250,0.45)";
+        ectx.lineWidth = 1.5;
+        ectx.stroke();
+
+        ectx.beginPath();
+        ectx.arc(slitX,slit2Y,r,-0.9,0.9);
+        ectx.strokeStyle = "rgba(251,146,60,0.45)";
+        ectx.stroke();
+    }
+
+    // 스크린
+    ectx.fillStyle = "#e2e8f0";
+    ectx.fillRect(screenX,30,5,270);
+
+    ectx.fillStyle = "white";
+    ectx.fillText("이중 슬릿",345,320);
+    ectx.fillText("검출 스크린",750,20);
+
+    // 진행 방향 화살표
+    ectx.fillStyle = "#facc15";
+    ectx.beginPath();
+    ectx.moveTo(740,165);
+    ectx.lineTo(725,157);
+    ectx.lineTo(725,173);
+    ectx.fill();
+}
+
+// ================================
+// 간섭 세기 계산
+// ================================
+
+function getIntensity(y) {
+
+    const lambda = wavelength * 1e-9;
+    const d = slitDistance * 1e-3;
+
+    // 스크린과 슬릿 사이 거리
+    const L = 1.0;
+
+    // 중심으로부터의 거리
+    const position = y * 0.004;
+
+    // 경로차의 근사값
+    const pathDifference = d * position / L;
+
+    // 두 파동의 위상 차이
+    const spatialPhase =
+        2*Math.PI*pathDifference/lambda;
+
+    const extraPhase = phase*Math.PI/180;
+
+    // 두 파동의 합성 세기
+    return Math.pow(
+        Math.cos((spatialPhase+extraPhase)/2),2
+    );
+}
+
+// ================================
+// 스크린 간섭무늬
+// ================================
+
+function drawScreen() {
+
+    background(sctx,screen);
+
+    const center = 130;
+
+    for(let x=0;x<900;x++) {
+
+        // 스크린 중심을 기준으로 위치 계산
+        const y = (x-450)*0.5;
+
+        const value = getIntensity(y);
+
+        // 밝기 계산
+        const brightness = Math.round(255*value);
+
+        sctx.fillStyle =
+            `rgb(${brightness},${brightness},${Math.min(255,brightness+10)})`;
+
+        sctx.fillRect(x,30,1,180);
+    }
+
+    // 중심선
+    sctx.strokeStyle = "#60a5fa";
+    sctx.setLineDash([5,5]);
+    sctx.beginPath();
+    sctx.moveTo(450,20);
+    sctx.lineTo(450,220);
+    sctx.stroke();
+    sctx.setLineDash([]);
+
+    sctx.fillStyle = "white";
+    sctx.font = "15px sans-serif";
+    sctx.fillText("중앙",455,245);
+
+    // 설명 갱신
+    const intensity = Math.pow(
+        Math.cos(phase*Math.PI/360),2
+    );
+
+    if(intensity > 0.99) {
+        document.getElementById("screenDescription").textContent =
+            "보강간섭 상태입니다. 두 파동의 위상이 같아 빛의 세기가 최대가 됩니다.";
+    }
+    else if(intensity < 0.01) {
+        document.getElementById("screenDescription").textContent =
+            "상쇄간섭 상태입니다. 두 파동의 위상이 반대가 되어 빛의 세기가 최소가 됩니다.";
+    }
+    else {
+        document.getElementById("screenDescription").textContent =
+            "부분적인 간섭이 발생합니다. 위상 차이에 따라 빛의 세기가 달라집니다.";
+    }
+}
+
+// ================================
+// 빛의 세기 그래프
+// ================================
+
+function drawGraph() {
+
+    background(gctx,graph);
+
+    const left = 50;
+    const bottom = 215;
+    const width = 800;
+    const height = 170;
+
+    // 축
+    gctx.strokeStyle = "#94a3b8";
+    gctx.lineWidth = 1;
+
+    gctx.beginPath();
+    gctx.moveTo(left,30);
+    gctx.lineTo(left,bottom);
+    gctx.lineTo(870,bottom);
+    gctx.stroke();
+
+    // 그래프
+    gctx.beginPath();
+
+    for(let i=0;i<=width;i++) {
+
+        const y = (i-width/2)*0.5;
+        const value = getIntensity(y);
+
+        const px = left+i;
+        const py = bottom-value*height;
+
+        if(i===0) {
+            gctx.moveTo(px,py);
+        } else {
+            gctx.lineTo(px,py);
+        }
+    }
+
+    gctx.strokeStyle = "#facc15";
+    gctx.lineWidth = 3;
+    gctx.stroke();
+
+    // 축 설명
+    gctx.fillStyle = "white";
+    gctx.font = "14px sans-serif";
+
+    gctx.fillText("빛의 세기",8,25);
+    gctx.fillText("스크린 위치",765,250);
+
+    // 최대 세기
+    gctx.fillStyle = "#94a3b8";
+    gctx.fillText("100%",8,48);
+    gctx.fillText("0%",15,215);
+}
+
+// ================================
+// 실험 결과 업데이트
+// ================================
+
+function update() {
+
+    document.getElementById("phaseValue").textContent =
+        phase+"°";
+
+    document.getElementById("wavelengthValue").textContent =
+        wavelength+" nm";
+
+    document.getElementById("distanceValue").textContent =
+        slitDistance.toFixed(1)+" mm";
+
+    const rad = phase*Math.PI/180;
+
+    const intensity = Math.pow(
+        Math.cos(rad/2),2
+    );
+
+    const amplitude =
+        2*Math.abs(Math.cos(rad/2));
+
+    const type =
+        phase===0 || phase===360 ? "보강간섭" :
+        phase===180 ? "상쇄간섭" :
+        "부분적인 간섭";
+
+    document.getElementById("interferenceType").textContent =
+        type;
+
+    document.getElementById("intensity").textContent =
+        Math.round(intensity*100)+"%";
+
+    let description = "";
+
+    if(phase===0 || phase===360) {
+
+        description =
+            "두 파동의 마루와 마루, 골과 골이 겹쳐 보강간섭이 발생합니다. 합성파의 진폭이 최대가 되고 빛의 세기가 강해집니다.";
+
+    } else if(phase===180) {
+
+        description =
+            "한 파동의 마루와 다른 파동의 골이 겹쳐 상쇄간섭이 발생합니다. 두 파동의 진폭이 같으므로 합성파의 진폭은 0이 됩니다.";
+
+    } else {
+
+        description =
+            "두 파동의 위상이 서로 다르기 때문에 부분적인 보강 및 상쇄간섭이 발생합니다. 합성파의 진폭은 "+amplitude.toFixed(2)+"입니다.";
+    }
+
+    document.getElementById("phaseDescription").textContent =
+        description;
+
+    document.getElementById("analysis").textContent =
+        "현재 위상 차이는 "+phase+"°이며, 파장은 "+wavelength+
+        "nm, 슬릿 간격은 "+slitDistance.toFixed(1)+
+        "mm입니다. 두 파동의 경로 차이와 위상 차이에 따라 스크린에서 밝고 어두운 간섭무늬가 나타납니다.";
+
+    drawExperiment();
+    drawScreen();
+    drawGraph();
+}
+
+// ================================
+// 이벤트 연결
+// ================================
+
+phaseInput.addEventListener("input",function() {
+
+    phase = Number(this.value);
+
+    document.querySelectorAll("[data-phase]").forEach(b=>{
+        b.classList.toggle(
+            "active",
+            Number(b.dataset.phase)===phase
+        );
+    });
+
+    update();
+});
+
+wavelengthInput.addEventListener("input",function() {
+    wavelength = Number(this.value);
+    update();
+});
+
+distanceInput.addEventListener("input",function() {
+    slitDistance = Number(this.value);
+    update();
+});
+
+// 빠른 위상 선택
+document.querySelectorAll("[data-phase]").forEach(button=>{
+
+    button.addEventListener("click",function() {
+
+        phase = Number(this.dataset.phase);
+        phaseInput.value = phase;
+
+        document.querySelectorAll("[data-phase]").forEach(b=>{
+            b.classList.remove("active");
+        });
+
+        this.classList.add("active");
+
+        update();
+    });
+});
+
+// 초기화
+document.getElementById("reset").addEventListener("click",function() {
+
+    phase = 0;
+    wavelength = 550;
+    slitDistance = 0.5;
+
+    phaseInput.value = 0;
+    wavelengthInput.value = 550;
+    distanceInput.value = 0.5;
+
+    document.querySelectorAll("[data-phase]").forEach(b=>{
+        b.classList.toggle(
+            "active",
+            Number(b.dataset.phase)===0
+        );
+    });
+
+    update();
+});
+
+// 첫 화면 실행
+update();
+
+</script>
+
+</body>
+</html>
